@@ -22,4 +22,5 @@ INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
 ('mod-temucraft-realm-first', 19, '{} is free again ({} {}).'),
 ('mod-temucraft-realm-first', 20, 'Use: .temucraft realmfirst mark <name> eligible|ineligible [reason]'),
 ('mod-temucraft-realm-first', 21, '{} is now marked {}. .temucraft realmfirst eligible {} shows the result.'),
-('mod-temucraft-realm-first', 22, 'Realm firsts: catalog, tiers and holders re-read.');
+('mod-temucraft-realm-first', 22, 'Realm firsts: catalog, tiers and holders re-read.'),
+('mod-temucraft-realm-first', 23, '  Boosted by GM commands, so never eligible for: {}{}. Why: {}');

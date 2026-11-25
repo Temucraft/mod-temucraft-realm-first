@@ -7,11 +7,12 @@ Realm First! achievements at levels 60 and 70 for every class and race (plus the
 A character earns a Realm First! the moment it reaches the level or skill (level-up, skill-up, trainer or quest skill), if it is the first to do so **and**:
 
 1. **The tier is open.** Each achievement belongs to a tier: 0 = Vanilla (level 60, skill 300), 1 = TBC (70, 375), 2 = Wrath (80, 450). A tier opens on its `Temucraft.RealmFirst.Tier<N>.OpenDate`, or, without a date, when the realm's expansion reaches it (`Temucraft.RealmFirst.Expansion`, by default the same as `Temucraft.ZoneAccess.Expansion`). The moment the module first sees a tier open that way is kept in `mod_temucraft_realm_first_tier`.
-2. **The character was made for it.** It has a row in `mod_temucraft_realm_first_eligibility`, written when the character is created on this realm, and its creation time is at or after the tier's open time. So when TBC opens, only characters created from then on can earn the level 70 and 375 skill firsts.
+2. **The character belongs to this realm.** It has a row in `mod_temucraft_realm_first_eligibility`, written when the character is created on this realm. Characters that already existed when the module first ran get one from a one-time start-up backfill (`ExistingCharactersEligible = 1`, the default), and a character that exists before a tier opens may earn that tier's firsts. With `ExistingCharactersEligible = 0` the stricter rule applies instead: no backfill, and only characters created at or after a tier's open time can earn its firsts.
 3. **It is the same character.** Still on the account it was created on (`RequireSameAccount`), the same class, and, for race firsts, still the race it was created as (no race change).
 4. **Not marked ineligible** by a GM (`.temucraft realmfirst mark <name> ineligible <reason>`).
-5. **Not a bot**: random bots (account name starting with `RNDBOT`) are out with `ExcludeRandomBots`; alt bots (a player's characters in the world without a game client) are out only with `ExcludeAltBots`.
-6. **Not in GM mode**, and the account doesn't have RBAC 9 (*cannot earn realm first achievements*).
+5. **Never boosted by a GM command** towards that first (`MarkGmBoosted`). An AllCommandScript sees each command before it runs and, if the invoker has its permission, marks the character it acts on (a name in the command, else the selected player, else the GM): `.levelup`, `.character level`, `.quest complete`, `.quest reward` mark the level firsts; `.setskill <skill>`, `.learn <spell>` of a profession rank or recipe mark that profession; `.learn all crafts` / `.learn all recipes` mark every profession. It is permanent (`.temucraft realmfirst mark ... eligible` doesn't clear it) and is kept in `boost_levels`, `boost_skills` and `boost_reason`, which `.temucraft realmfirst eligible` shows. The core has no `.modify` subcommand that changes level or skill; `.maxskill` only raises level-bound skills (weapons, defense), not professions. Items given with `.additem` aren't tracked.
+6. **Not a bot**: random bots (account name starting with `RNDBOT`) are out with `ExcludeRandomBots`; alt bots (a player's characters in the world without a game client) are out only with `ExcludeAltBots`.
+7. **Not in GM mode**, and the account doesn't have RBAC 9 (*cannot earn realm first achievements*).
 
 A player who reaches a free first but can't earn it is told why (`TellIneligible`), and the server log says so too.
 
@@ -19,19 +20,14 @@ A player who reaches a free first but can't earn it is told why (`TellIneligible
 
 Neither the core nor the Temucraft modules leave a trace when a character is copied: `.pdump load` writes the character's rows (with its old `creation_date`) and calls no script, a copied database row is invisible, and `.character changeaccount` only changes the account. So the module trusts only what it wrote itself: the eligibility row is made in `OnPlayerCreate`, which runs only when a player makes a character at the character screen.
 
-- **pdump / copied rows / characters from another realm**: no row, never eligible (until a GM marks them eligible).
+- **pdump / copied rows / characters from another realm**, loaded after the module first ran: no row, never eligible (until a GM marks them eligible).
+- **Loaded before the module first ran**: the backfill gave them a row like every other existing character. Mark them with `.temucraft realmfirst mark <name> ineligible <reason>`.
 - **Moved to another account**: the row's account no longer matches, not eligible (`RequireSameAccount`).
-- **Older characters** (created before the module, or before a tier opened): no row, or created too early for the tier.
+- **Older characters**: eligible through the backfill (with `ExistingCharactersEligible = 0`: only for tiers that opened after they were created).
 - **Random bots**: made by the bot factory, not at the character screen, so they have no row either.
 - A character deleted for good loses its row (`OnPlayerDeleteFromDB`); one restored with `.character deleted restore` keeps it.
 
-`.temucraft realmfirst mark <name> eligible` gives a character with no row one, using its `creation_date` from `characters` (so the tier rule still applies). To vouch for many at once, for example every character that existed when the module was installed:
-
-```sql
-INSERT IGNORE INTO mod_temucraft_realm_first_eligibility (guid, account, name, race, class, created_at, source, reason)
-SELECT guid, account, name, race, class, UNIX_TIMESTAMP(creation_date), 'marked', 'existed at install'
-FROM characters WHERE deleteInfos_Account IS NULL AND account NOT IN (SELECT id FROM acore_auth.account WHERE username LIKE 'RNDBOT%');
-```
+`.temucraft realmfirst mark <name> eligible` gives a character with no row one, using its `creation_date` from `characters`. The backfill runs once (`mod_temucraft_realm_first_state`, name `backfill`); delete that row to run it again at the next start (it only adds rows for characters that have none).
 
 ## The achievements
 
@@ -46,7 +42,7 @@ FROM characters WHERE deleteInfos_Account IS NULL AND account NOT IN (SELECT id 
 | 457-467, 1404-1413, 1429-1454, 1529-1543 | stock / WHE Realm First! Level 80 (overall, class, race) | 2 |
 | 1414-1427 | stock Realm First! Grand Master *profession* (450) | 2 |
 
-60000-60299 is reserved for this module. The new achievements are Feats of Strength (category 81), 0 points, flag 0x100 (realm first: the client shows its "Realm First!" message), and have **no criteria**: no stock code can ever complete them, only the module grants them. Races with two IDs (Pandaren, Dracthyr, Earthen, Haranir) have one per faction.
+60000-60299 is reserved for this module. The new achievements are Feats of Strength (category 81), 0 points, flag 0x100 (realm first: the client shows its "Realm First!" message), and have **no criteria**: no stock code can ever complete them, only the module grants them. Races with two IDs (Pandaren, Dracthyr, Earthen, Haranir) have one per faction: 13, 25, 27 and 29 are Alliance and 14, 26, 28 and 30 Horde. That comes from the language each race has in Temucraft's ChrRaces.dbc (patch-5: Common for the first, Orcish for the second), not from retail, whose IDs differ (retail Earthen 85 is Alliance, so there the lower ID is Horde).
 
 **Stock level 80 / 450 firsts** (`TakeOverStock`): with 1 (default) the module blocks their stock criteria (`CanCheckCriteria` / `IsCompletedCriteria` hooks) and grants them with the same rules (Wrath tier). Whoever already has one when the module first runs is imported as its holder. With 0 they are left to the core (anyone, bots included). Note: in the core's data only the stock 9 races have race data for their level 80 first; the WHE race ones (Goblin 1429 ... Haranir 1543) have none, so with `TakeOverStock = 0` the first character of any race to reach 80 gets all of them.
 
@@ -77,10 +73,11 @@ GM permissions are linked to roles 193 / 1012, admin ones to 192 / 1014.
 |---|---|---|
 | world | `mod_temucraft_realm_first` | the catalog: achievement, type, tier, level / class / race / skill, stock, enabled |
 | world | `achievement_dbc` | 60000-60299 |
-| world | `module_string` | 22 texts |
+| world | `module_string` | 23 texts |
 | characters | `mod_temucraft_realm_first_eligibility` | one row per character created here |
 | characters | `mod_temucraft_realm_first_holder` | who holds each first (held = 0: reopened by a reset) |
 | characters | `mod_temucraft_realm_first_tier` | when each tier opened |
+| characters | `mod_temucraft_realm_first_state` | one-time backfill done |
 | auth | `rbac_permissions` | 103901-103905 |
 
 ## Works with other modules
@@ -89,6 +86,6 @@ Doesn't need any other module. Reads `Temucraft.ZoneAccess.Expansion` from mod-t
 
 ## Texts and translations
 
-The 22 player-facing texts are in `module_string` under `mod-temucraft-realm-first`; translations go in `module_string_locale`. If a row is missing the English text in the code is used.
+The 23 player-facing texts are in `module_string` under `mod-temucraft-realm-first`; translations go in `module_string_locale`. If a row is missing the English text in the code is used.
 
 Part of the Temucraft modules for AzerothCore 3.3.5a.

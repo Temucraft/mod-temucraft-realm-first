@@ -9,9 +9,12 @@
  *   - belongs to an open tier: Temucraft.RealmFirst.Tier<N>.OpenDate has passed, or (no date) the realm's expansion
  *     (Temucraft.RealmFirst.Expansion, else Temucraft.ZoneAccess.Expansion) is at least N; the moment the module first
  *     saw a tier open is kept in mod_temucraft_realm_first_tier;
- *   - has a row in mod_temucraft_realm_first_eligibility (written when the character is created here), not marked
- *     ineligible, still on the account it was made on, created at or after the tier opened, and (race firsts) still
- *     the race it was made as;
+ *   - has a row in mod_temucraft_realm_first_eligibility (written when the character is created here; characters that
+ *     existed when the module first ran get one from a one-time start-up backfill), not marked ineligible, still on
+ *     the account and class it was made with, (race firsts) still its race, and never boosted towards that first by a
+ *     GM command (.levelup, .character level, .quest complete/reward, .setskill, .learn of profession spells, .learn
+ *     all crafts/recipes: seen by an AllCommandScript and recorded for good in the eligibility row);
+ *   - with ExistingCharactersEligible = 0 only: created at or after the tier opened;
  *   - is not a random bot (account name prefix), nor an alt bot (a character with no client) if those are excluded;
  *   - is not in GM mode and its account may earn realm firsts (RBAC 9 not granted).
  * The new achievements (60000-60299) have no criteria, so no stock code can grant them. With TakeOverStock, the stock
@@ -38,10 +41,13 @@
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Player.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
 #include "RBAC.h"
 #include "ScriptMgr.h"
 #include "TemucraftModuleText.h"
 #include "Timer.h"
+#include "Tokenize.h"
 #include "World.h"
 #include "WorldSession.h"
 
@@ -52,6 +58,7 @@
 #include <ctime>
 #include <iomanip>
 #include <mutex>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -102,6 +109,20 @@ namespace
         std::string reason;
         std::string markedBy;
         uint32 markedAt = 0;
+        bool boostLevels = false;
+        std::string boostSkills;    // '' none, '*' every profession, else ",164,171,"
+        std::string boostReason;
+    };
+
+    // Firsts a GM command boosted this character towards: never earned by it.
+    struct Boost
+    {
+        bool levels = false;
+        bool allSkills = false;
+        std::set<uint32> skills;
+        std::string reason;
+
+        bool Any() const { return levels || allSkills || !skills.empty(); }
     };
 
     struct Holder
@@ -125,6 +146,8 @@ namespace
         bool tellIneligible = true;
         bool takeOverStock = true;
         bool sameAccount = true;
+        bool existingEligible = true;
+        bool markGmBoosts = true;
         std::array<bool, TYPE_MAX> types = { true, true, true, true };
         std::array<uint32, MAX_TIERS> openDate = { };   // Tier<N>.OpenDate, parsed (0 = none)
         int32 zoneAccessExpansion = 2;                  // Temucraft.ZoneAccess.Expansion, read with the config
@@ -139,6 +162,7 @@ namespace
     std::unordered_map<uint32, Holder> sHolders;
     std::array<uint32, MAX_TIERS> sStamped = { };   // mod_temucraft_realm_first_tier
     std::unordered_map<uint32, bool> sRandomBotAccount;
+    std::unordered_map<ObjectGuid::LowType, Boost> sBoosts;   // marked since start-up (the row may not be written yet)
 
     // Read on every achievement criteria update by every player: lock-free flags.
     std::array<std::atomic<bool>, MAX_ACHIEVEMENT_ID> sManaged = { };   // the module decides who holds it
@@ -427,10 +451,30 @@ namespace
         sHolders = std::move(holders);
     }
 
+    // Characters that existed when the module first ran (ExistingCharactersEligible): one row each, once. Later
+    // characters get theirs at creation, so a character that arrives later by pdump or copy still has none.
+    void BackfillExisting()
+    {
+        if (!settings.enable || !settings.existingEligible)
+            return;
+        if (CharacterDatabase.Query("SELECT 1 FROM `mod_temucraft_realm_first_state` WHERE `name` = 'backfill'"))
+            return;
+        uint32 tiers = 0;
+        for (uint8 tier = 0; tier < MAX_TIERS; ++tier)
+            if (TierOpen(tier))
+                tiers |= 1u << tier;
+        CharacterDatabase.DirectExecute("INSERT IGNORE INTO `mod_temucraft_realm_first_eligibility` (`guid`, `account`, `name`, `race`, "
+            "`class`, `created_at`, `tiers_at_creation`, `eligible`, `source`, `reason`) SELECT `guid`, `account`, `name`, `race`, `class`, "
+            "UNIX_TIMESTAMP(`creation_date`), {}, 1, 'existing', 'existed when the module first ran' FROM `characters`", tiers);
+        CharacterDatabase.DirectExecute("INSERT IGNORE INTO `mod_temucraft_realm_first_state` (`name`, `value`) VALUES ('backfill', {})", Now());
+        LOG_INFO("module", "mod-temucraft-realm-first: every existing character got an eligibility row (one-time backfill)");
+    }
+
     void LoadAll()
     {
         LoadCatalog();
         LoadTiers();
+        BackfillExisting();
         LoadHolders();
         std::lock_guard<std::mutex> guard(sLock);
         uint32 managed = 0;
@@ -443,7 +487,8 @@ namespace
     Optional<Eligibility> LoadEligibility(ObjectGuid::LowType guid)
     {
         QueryResult result = CharacterDatabase.Query("SELECT `account`, `name`, `race`, `class`, `created_at`, `tiers_at_creation`, "
-            "`eligible`, `source`, `reason`, `marked_by`, `marked_at` FROM `mod_temucraft_realm_first_eligibility` WHERE `guid` = {}", guid);
+            "`eligible`, `source`, `reason`, `marked_by`, `marked_at`, `boost_levels`, `boost_skills`, `boost_reason` "
+            "FROM `mod_temucraft_realm_first_eligibility` WHERE `guid` = {}", guid);
         if (!result)
             return std::nullopt;
         Field* f = result->Fetch();
@@ -459,6 +504,9 @@ namespace
         e.reason = f[8].Get<std::string>();
         e.markedBy = f[9].Get<std::string>();
         e.markedAt = f[10].Get<uint32>();
+        e.boostLevels = f[11].Get<uint8>() != 0;
+        e.boostSkills = f[12].Get<std::string>();
+        e.boostReason = f[13].Get<std::string>();
         return e;
     }
 
@@ -481,11 +529,55 @@ namespace
         return e;
     }
 
+    // ---------------------------------------------------------------- GM boosts
+
+    Boost BoostOf(ObjectGuid::LowType guid, Optional<Eligibility> const& row)
+    {
+        Boost b;
+        if (row)
+        {
+            b.levels = row->boostLevels;
+            b.allSkills = row->boostSkills == "*";
+            for (std::string_view part : Acore::Tokenize(row->boostSkills, ',', false))
+                if (Optional<uint32> skill = Acore::StringTo<uint32>(part))
+                    b.skills.insert(*skill);
+            b.reason = row->boostReason;
+        }
+        std::lock_guard<std::mutex> guard(sLock);
+        auto itr = sBoosts.find(guid);
+        if (itr != sBoosts.end())
+        {
+            b.levels |= itr->second.levels;
+            b.allSkills |= itr->second.allSkills;
+            b.skills.insert(itr->second.skills.begin(), itr->second.skills.end());
+            if (!itr->second.reason.empty())
+                b.reason = itr->second.reason;
+        }
+        return b;
+    }
+
+    std::string SkillsText(Boost const& b)
+    {
+        if (b.allSkills)
+            return "*";
+        std::string out;
+        for (uint32 skill : b.skills)
+            out += Acore::StringFormat(",{}", skill);
+        return out.empty() ? out : out + ",";
+    }
+
+    std::string BoostVerdict(Boost const& b, Entry const& e)
+    {
+        bool hit = e.type == TYPE_PROFESSION ? (b.allSkills || b.skills.count(e.skill)) : b.levels;
+        return hit ? "boosted towards it by a GM command (" + b.reason + ")" : "";
+    }
+
     // ---------------------------------------------------------------- the rules
 
     // Whether this character (as it is now) may earn firsts of this tier, ignoring bots and GM rules (they need the
     // character online). The reason is empty when it may.
-    std::string CharacterVerdict(Optional<Eligibility> const& row, uint32 account, uint8 race, uint8 cls, uint8 tier, uint8 raceOfEntry)
+    std::string CharacterVerdict(Optional<Eligibility> const& row, uint32 account, uint8 race, uint8 cls, uint8 tier, uint8 raceOfEntry,
+        Boost const* boost = nullptr, Entry const* entry = nullptr)
     {
         if (!row)
             return "no eligibility row: not created on this realm while the module ran (pdump, copy, older character, bot)";
@@ -500,7 +592,10 @@ namespace
         if (!TierOpen(tier, &openTime))
             return openTime ? Acore::StringFormat("{} opens on {}", TierName(tier), Date(openTime))
                             : Acore::StringFormat("{} is not open", TierName(tier));
-        if (row->createdAt < openTime)
+        if (boost && entry)
+            if (std::string why = BoostVerdict(*boost, *entry); !why.empty())
+                return why;
+        if (!settings.existingEligible && row->createdAt < openTime)
             return Acore::StringFormat("created {}, before {} opened ({})", Date(row->createdAt), TierName(tier), Date(openTime));
         if (raceOfEntry && race != row->race)
             return Acore::StringFormat("race changed since creation (was {})", row->race);
@@ -572,6 +667,7 @@ namespace
         if (!row && GetBotKind(player) == BOT_RANDOM)
             row = LoadFromCharacters(player->GetGUID().GetCounter());
         bool quiet = GetBotKind(player) != BOT_NONE;
+        Boost boost = BoostOf(player->GetGUID().GetCounter(), row);
         uint32 account = session ? session->GetAccountId() : 0;
 
         for (Entry const& e : entries)
@@ -586,7 +682,8 @@ namespace
             if (why.empty() && rbacDenied)
                 why = "the account may not earn realm firsts (RBAC 9)";
             if (why.empty())
-                why = CharacterVerdict(row, account, player->getRace(), player->getClass(), e.tier, e.type == TYPE_RACE ? e.race : 0);
+                why = CharacterVerdict(row, account, player->getRace(), player->getClass(), e.tier, e.type == TYPE_RACE ? e.race : 0,
+                    &boost, &e);
             if (!why.empty())
             {
                 LOG_INFO("module", "mod-temucraft-realm-first: {} reached {} first but is not eligible: {}", player->GetName(),
@@ -908,6 +1005,12 @@ public:
                 "here while the module ran: pdump, copy, older character or bot). .temucraft realmfirst mark {} eligible adds one."),
                 target->name, target->guid.GetCounter(), target->account, target->name);
 
+        Boost boost = BoostOf(target->guid.GetCounter(), row);
+        if (boost.Any())
+            handler->PSendSysMessage(T(handler, 23, "  Boosted by GM commands, so never eligible for: {}{}. Why: {}"),
+                boost.levels ? "level firsts" : "", boost.allSkills ? (boost.levels ? ", every profession" : "every profession")
+                : boost.skills.empty() ? "" : Acore::StringFormat("{}skills {}", boost.levels ? ", " : "", SkillsText(boost)), boost.reason);
+
         if (target->online)
         {
             std::string bot = BotVerdict(target->online);
@@ -1022,6 +1125,181 @@ public:
     }
 };
 
+// GM commands that level a character, set its skills or teach it profession spells: the character may never earn the
+// firsts they boosted it towards. Runs before the command (it marks even if the command then fails on its arguments),
+// but only when the invoker has the command's permission.
+class TemucraftRealmFirst_CommandWatch : public AllCommandScript
+{
+public:
+    TemucraftRealmFirst_CommandWatch() : AllCommandScript("TemucraftRealmFirst_CommandWatch", { ALLCOMMANDHOOK_ON_TRY_EXECUTE_COMMAND }) { }
+
+    bool OnTryExecuteCommand(ChatHandler& handler, std::string_view cmdStr) override
+    {
+        if (settings.enable && settings.markGmBoosts)
+            Watch(handler, cmdStr);
+        return true;
+    }
+
+private:
+    // Hyperlinks become one token "@type:id:...", colours and the link text go.
+    static std::vector<std::string> Tokens(std::string_view text)
+    {
+        std::string out;
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            if (text[i] == '|' && i + 1 < text.size())
+            {
+                char c = text[i + 1];
+                if (c == 'c') { i += 9; continue; }
+                if (c == 'r') { ++i; continue; }
+                if (c == 'H')
+                {
+                    size_t end = text.find("|h", i + 2);
+                    if (end == std::string_view::npos)
+                        break;
+                    out += " @" + std::string(text.substr(i + 2, end - i - 2)) + " ";
+                    size_t close = text.find("]|h", end + 2);
+                    i = close == std::string_view::npos ? end + 1 : close + 2;
+                    continue;
+                }
+            }
+            out += text[i];
+        }
+        std::vector<std::string> tokens;
+        for (std::string_view t : Acore::Tokenize(out, ' ', false))
+            tokens.emplace_back(t);
+        return tokens;
+    }
+
+    static Optional<uint32> Id(std::string const& token, char const* type)
+    {
+        std::string prefix = Acore::StringFormat("@{}:", type);
+        if (StringStartsWithI(token, prefix))
+        {
+            std::string rest = token.substr(prefix.size());
+            return Acore::StringTo<uint32>(rest.substr(0, rest.find(':')));
+        }
+        return Acore::StringTo<uint32>(token);
+    }
+
+    static void Watch(ChatHandler& handler, std::string_view cmdStr)
+    {
+        std::vector<std::string> tok = Tokens(cmdStr);
+        auto is = [&](size_t i, std::string_view name)
+        {
+            return i < tok.size() && !tok[i].empty() && tok[i][0] != '@' && StringStartsWithI(name, tok[i]);
+        };
+
+        enum TargetMode { NAME_OR_SELECTED_OR_SELF, SELECTED, SELF };
+        uint32 permission = 0;
+        bool levels = false, allSkills = false;
+        std::set<uint32> skills;
+        TargetMode mode = NAME_OR_SELECTED_OR_SELF;
+        size_t args = 1;
+
+        if (is(0, "levelup"))
+            permission = rbac::RBAC_PERM_COMMAND_LEVELUP, levels = true;
+        else if (is(0, "character") && is(1, "level"))
+            permission = rbac::RBAC_PERM_COMMAND_CHARACTER_LEVEL, levels = true, args = 2;
+        else if (is(0, "quest") && is(1, "complete"))
+            permission = rbac::RBAC_PERM_COMMAND_QUEST_COMPLETE, levels = true, args = 2;
+        else if (is(0, "quest") && is(1, "reward"))
+            permission = rbac::RBAC_PERM_COMMAND_QUEST_REWARD, levels = true, args = 2;
+        else if (is(0, "setskill") && tok.size() > 1)
+        {
+            Optional<uint32> skill = Id(tok[1], "skill");
+            if (!skill)
+                return;
+            permission = rbac::RBAC_PERM_COMMAND_SETSKILL, mode = SELECTED;
+            skills.insert(*skill);
+        }
+        else if (is(0, "learn") && is(1, "all") && is(2, "crafts"))
+            permission = rbac::RBAC_PERM_COMMAND_LEARN_ALL_CRAFTS, allSkills = true, mode = SELF;
+        else if (is(0, "learn") && is(1, "all") && is(2, "recipes"))
+            permission = rbac::RBAC_PERM_COMMAND_LEARN_ALL_RECIPES, allSkills = true, mode = SELECTED;
+        else if (is(0, "learn") && tok.size() > 1 && !is(1, "all"))
+        {
+            Optional<uint32> spell = Id(tok[1], "spell");
+            SpellInfo const* info = spell ? sSpellMgr->GetSpellInfo(*spell) : nullptr;
+            if (!info)
+                return;
+            std::set<uint32> professions;
+            {
+                std::lock_guard<std::mutex> guard(sLock);
+                for (Entry const& e : sCatalog)
+                    if (e.type == TYPE_PROFESSION)
+                        professions.insert(e.skill);
+            }
+            // a profession rank (Journeyman Tailoring...) or a recipe of a profession
+            for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+                if ((info->Effects[i].Effect == SPELL_EFFECT_SKILL || info->Effects[i].Effect == SPELL_EFFECT_SKILL_STEP) &&
+                    professions.count(uint32(info->Effects[i].MiscValue)))
+                    skills.insert(uint32(info->Effects[i].MiscValue));
+            SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(info->Id);
+            for (auto itr = bounds.first; itr != bounds.second; ++itr)
+                if (professions.count(itr->second->SkillLine))
+                    skills.insert(itr->second->SkillLine);
+            if (skills.empty())
+                return;
+            permission = rbac::RBAC_PERM_COMMAND_LEARN, mode = SELECTED;
+        }
+        else
+            return;
+
+        if (!handler.IsConsole() && !handler.GetSession()->HasPermission(permission))
+            return;     // the command will be refused
+
+        ObjectGuid target;
+        if (mode == NAME_OR_SELECTED_OR_SELF)
+            for (size_t i = args; i < tok.size() && !target; ++i)
+            {
+                std::string name = tok[i];
+                if (StringStartsWithI(name, "@player:"))    // a player link
+                    name = name.substr(8, name.find(':', 8) == std::string::npos ? std::string::npos : name.find(':', 8) - 8);
+                if (name.empty() || name[0] == '@' || name[0] == '-' || std::isdigit(uint8(name[0])) || !normalizePlayerName(name))
+                    continue;
+                if (CharacterCacheEntry const* cache = sCharacterCache->GetCharacterCacheByName(name))
+                    target = cache->Guid;
+            }
+        if (!target && !handler.IsConsole())
+        {
+            Player* player = mode == SELF ? handler.GetSession()->GetPlayer()
+                           : mode == SELECTED ? handler.getSelectedPlayer() : handler.getSelectedPlayerOrSelf();
+            if (player)
+                target = player->GetGUID();
+        }
+        if (!target)
+            return;
+
+        std::string why = Acore::StringFormat(".{} by {} on {}", std::string(cmdStr).substr(0, 80), ByName(&handler), Date(Now()));
+        Mark(target.GetCounter(), levels, allSkills, skills, why);
+    }
+
+    static void Mark(ObjectGuid::LowType guid, bool levels, bool allSkills, std::set<uint32> const& skills, std::string const& why)
+    {
+        Optional<Eligibility> row = LoadEligibility(guid);
+        Boost b = BoostOf(guid, row);
+        b.levels |= levels;
+        b.allSkills |= allSkills;
+        b.skills.insert(skills.begin(), skills.end());
+        b.reason = (why + (b.reason.empty() ? "" : "; " + b.reason)).substr(0, 255);
+        {
+            std::lock_guard<std::mutex> guard(sLock);
+            sBoosts[guid] = b;
+        }
+        if (row)
+            CharacterDatabase.Execute("UPDATE `mod_temucraft_realm_first_eligibility` SET `boost_levels` = {}, `boost_skills` = '{}', "
+                "`boost_reason` = '{}' WHERE `guid` = {}", b.levels ? 1 : 0, SkillsText(b), Escape(b.reason), guid);
+        else
+            CharacterDatabase.Execute("INSERT IGNORE INTO `mod_temucraft_realm_first_eligibility` (`guid`, `account`, `name`, `race`, "
+                "`class`, `created_at`, `eligible`, `source`, `reason`, `boost_levels`, `boost_skills`, `boost_reason`) SELECT `guid`, "
+                "`account`, `name`, `race`, `class`, UNIX_TIMESTAMP(`creation_date`), 0, 'boosted', 'no eligibility row, boosted by a GM "
+                "command', {}, '{}', '{}' FROM `characters` WHERE `guid` = {}", b.levels ? 1 : 0, SkillsText(b), Escape(b.reason), guid);
+        LOG_INFO("module", "mod-temucraft-realm-first: character {} boosted ({}{}): {}", guid, levels ? "levels " : "",
+            allSkills ? "all professions" : SkillsText(b), why);
+    }
+};
+
 class TemucraftRealmFirst_World : public WorldScript
 {
 public:
@@ -1038,6 +1316,8 @@ public:
         settings.tellIneligible = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.TellIneligible", true);
         settings.takeOverStock = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.TakeOverStock", true);
         settings.sameAccount = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.RequireSameAccount", true);
+        settings.existingEligible = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.ExistingCharactersEligible", true);
+        settings.markGmBoosts = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.MarkGmBoosted", true);
         settings.types[TYPE_LEVEL] = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.Overall", true);
         settings.types[TYPE_CLASS] = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.Class", true);
         settings.types[TYPE_RACE] = sConfigMgr->GetOption<bool>("Temucraft.RealmFirst.Race", true);
@@ -1065,5 +1345,6 @@ void AddTemucraftRealmFirstScripts()
     new TemucraftRealmFirst_Player();
     new TemucraftRealmFirst_Achievement();
     new TemucraftRealmFirst_Commands();
+    new TemucraftRealmFirst_CommandWatch();
     new TemucraftRealmFirst_World();
 }

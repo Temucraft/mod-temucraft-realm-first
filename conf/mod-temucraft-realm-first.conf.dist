@@ -26,13 +26,34 @@ Temucraft.RealmFirst.Expansion = -1
 #    Temucraft.RealmFirst.Tier1.OpenDate
 #    Temucraft.RealmFirst.Tier2.OpenDate
 #        Description: When each tier opens, server local time, "YYYY-MM-DD HH:MM:SS" (Tier3...Tier9 work too).
-#                     Its Realm Firsts can be earned from then on, only by characters created at or after that time.
+#                     Its Realm Firsts can be earned from then on (with ExistingCharactersEligible = 0 only by
+#                     characters created at or after that time).
 #                     Empty = opened by Temucraft.RealmFirst.Expansion.
 #        Default:     ""
 
 Temucraft.RealmFirst.Tier0.OpenDate = ""
 Temucraft.RealmFirst.Tier1.OpenDate = ""
 Temucraft.RealmFirst.Tier2.OpenDate = ""
+
+#
+#    Temucraft.RealmFirst.ExistingCharactersEligible
+#        Description: 1 = characters that already exist when a tier opens may earn its firsts, and every character
+#                     that existed when the module first ran gets an eligibility row (once, at start-up). Characters
+#                     that arrive later by pdump or copy still have no row and can't earn any.
+#                     0 = stricter: only characters created at or after a tier opened may earn its firsts (and no
+#                     backfill for a module running for the first time).
+#        Default:     1
+
+Temucraft.RealmFirst.ExistingCharactersEligible = 1
+
+#
+#    Temucraft.RealmFirst.MarkGmBoosted
+#        Description: A character that a GM command levels (.levelup, .character level, .quest complete / reward) or
+#                     boosts in a profession (.setskill, .learn of a profession rank or recipe, .learn all crafts /
+#                     recipes) can never earn those firsts. Recorded in its eligibility row, with the command.
+#        Default:     1
+
+Temucraft.RealmFirst.MarkGmBoosted = 1
 
 #
 #    Temucraft.RealmFirst.Overall
