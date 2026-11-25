@@ -1127,7 +1127,7 @@ public:
 
 // GM commands that level a character, set its skills or teach it profession spells: the character may never earn the
 // firsts they boosted it towards. Runs before the command (it marks even if the command then fails on its arguments),
-// but only when the invoker has the command's permission.
+// but only when the core resolves the typed words to that command and lets this invoker run it.
 class TemucraftRealmFirst_CommandWatch : public AllCommandScript
 {
 public:
@@ -1185,39 +1185,58 @@ private:
     static void Watch(ChatHandler& handler, std::string_view cmdStr)
     {
         std::vector<std::string> tok = Tokens(cmdStr);
-        auto is = [&](size_t i, std::string_view name)
+        // True when the first words of what was typed are this command, resolved and allowed by the core itself:
+        // GetAutoCompletionsFor walks the command tree as running it does (abbreviations, and the visibility test:
+        // the world `command` table's level, else the RBAC id). The typed words are sent in upper case: a word the
+        // core resolved comes back as the command's own (lower case) name, a word it stopped at (unknown, or not
+        // allowed for this invoker) comes back as typed. So "<words> x" == "<command> x" only when all of them
+        // resolved. (The hook runs before the core's own check, for commands the invoker can't use too.)
+        auto resolves = [&](std::initializer_list<char const*> path)
         {
-            return i < tok.size() && !tok[i].empty() && tok[i][0] != '@' && StringStartsWithI(name, tok[i]);
+            if (tok.size() < path.size())
+                return false;
+            std::string query, expected;
+            size_t i = 0;
+            for (char const* word : path)
+            {
+                if (tok[i].empty() || tok[i][0] == '@')
+                    return false;
+                std::string typed = tok[i++];
+                std::transform(typed.begin(), typed.end(), typed.begin(), [](char c) { return char(std::toupper(uint8(c))); });
+                query += typed + " ";
+                expected += std::string(word) + " ";
+            }
+            std::vector<std::string> const resolved = Acore::ChatCommands::GetAutoCompletionsFor(handler, query + "x");
+            return resolved.size() == 1 && resolved.front() == expected + "x";
         };
 
         enum TargetMode { NAME_OR_SELECTED_OR_SELF, SELECTED, SELF };
-        uint32 permission = 0;
         bool levels = false, allSkills = false;
         std::set<uint32> skills;
         TargetMode mode = NAME_OR_SELECTED_OR_SELF;
         size_t args = 1;
 
-        if (is(0, "levelup"))
-            permission = rbac::RBAC_PERM_COMMAND_LEVELUP, levels = true;
-        else if (is(0, "character") && is(1, "level"))
-            permission = rbac::RBAC_PERM_COMMAND_CHARACTER_LEVEL, levels = true, args = 2;
-        else if (is(0, "quest") && is(1, "complete"))
-            permission = rbac::RBAC_PERM_COMMAND_QUEST_COMPLETE, levels = true, args = 2;
-        else if (is(0, "quest") && is(1, "reward"))
-            permission = rbac::RBAC_PERM_COMMAND_QUEST_REWARD, levels = true, args = 2;
-        else if (is(0, "setskill") && tok.size() > 1)
+        if (resolves({ "levelup" }))
+            levels = true;
+        else if (resolves({ "character", "level" }))
+            levels = true, args = 2;
+        else if (resolves({ "quest", "complete" }) || resolves({ "quest", "reward" }))
+            levels = true, args = 2;
+        else if (tok.size() > 1 && resolves({ "setskill" }))
         {
             Optional<uint32> skill = Id(tok[1], "skill");
             if (!skill)
                 return;
-            permission = rbac::RBAC_PERM_COMMAND_SETSKILL, mode = SELECTED;
+            mode = SELECTED;
             skills.insert(*skill);
         }
-        else if (is(0, "learn") && is(1, "all") && is(2, "crafts"))
-            permission = rbac::RBAC_PERM_COMMAND_LEARN_ALL_CRAFTS, allSkills = true, mode = SELF;
-        else if (is(0, "learn") && is(1, "all") && is(2, "recipes"))
-            permission = rbac::RBAC_PERM_COMMAND_LEARN_ALL_RECIPES, allSkills = true, mode = SELECTED;
-        else if (is(0, "learn") && tok.size() > 1 && !is(1, "all"))
+        else if (resolves({ "learn", "all", "crafts" }))
+            allSkills = true, mode = SELF;
+        else if (resolves({ "learn", "all", "recipes" }))
+            allSkills = true, mode = SELECTED;
+        // plain .learn <spell>: the "learn" node is shown when any of its subcommands is allowed, so this can mark
+        // someone who may only use .learn all ...; the spell must be a profession rank or recipe
+        else if (tok.size() > 1 && resolves({ "learn" }))
         {
             Optional<uint32> spell = Id(tok[1], "spell");
             SpellInfo const* info = spell ? sSpellMgr->GetSpellInfo(*spell) : nullptr;
@@ -1241,13 +1260,10 @@ private:
                     skills.insert(itr->second->SkillLine);
             if (skills.empty())
                 return;
-            permission = rbac::RBAC_PERM_COMMAND_LEARN, mode = SELECTED;
+            mode = SELECTED;
         }
         else
             return;
-
-        if (!handler.IsConsole() && !handler.GetSession()->HasPermission(permission))
-            return;     // the command will be refused
 
         ObjectGuid target;
         if (mode == NAME_OR_SELECTED_OR_SELF)
