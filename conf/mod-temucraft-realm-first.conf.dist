@@ -1,0 +1,106 @@
+[worldserver]
+
+########################################
+# mod-temucraft-realm-first
+########################################
+#
+#    Temucraft.RealmFirst.Enable
+#        Description: The module grants the Realm First! achievements of its catalog (mod_temucraft_realm_first, world
+#                     DB). Off: it grants nothing and blocks nothing (the stock Realm Firsts work as in the core).
+#        Default:     1
+
+Temucraft.RealmFirst.Enable = 1
+
+#
+#    Temucraft.RealmFirst.Expansion
+#        Description: Which content tiers are open, as the highest open tier: 0 = Vanilla, 1 = TBC, 2 = Wrath (3, 4...
+#                     work too). -1 = use Temucraft.ZoneAccess.Expansion (mod-temucraft-zone-access), or 2 without it.
+#                     A tier opened this way opens at the moment the module first sees it open (kept in
+#                     mod_temucraft_realm_first_tier, characters DB). A tier with an OpenDate below ignores this.
+#        Default:     -1
+
+Temucraft.RealmFirst.Expansion = -1
+
+#
+#    Temucraft.RealmFirst.Tier0.OpenDate
+#    Temucraft.RealmFirst.Tier1.OpenDate
+#    Temucraft.RealmFirst.Tier2.OpenDate
+#        Description: When each tier opens, server local time, "YYYY-MM-DD HH:MM:SS" (Tier3...Tier9 work too).
+#                     Its Realm Firsts can be earned from then on, only by characters created at or after that time.
+#                     Empty = opened by Temucraft.RealmFirst.Expansion.
+#        Default:     ""
+
+Temucraft.RealmFirst.Tier0.OpenDate = ""
+Temucraft.RealmFirst.Tier1.OpenDate = ""
+Temucraft.RealmFirst.Tier2.OpenDate = ""
+
+#
+#    Temucraft.RealmFirst.Overall
+#    Temucraft.RealmFirst.Class
+#    Temucraft.RealmFirst.Race
+#    Temucraft.RealmFirst.Profession
+#        Description: Which kinds are on: first to a level, first of each class to a level, first of each race to
+#                     a level, first to a skill in each profession. A kind that's off is neither granted nor blocked.
+#        Default:     1
+
+Temucraft.RealmFirst.Overall = 1
+Temucraft.RealmFirst.Class = 1
+Temucraft.RealmFirst.Race = 1
+Temucraft.RealmFirst.Profession = 1
+
+#
+#    Temucraft.RealmFirst.TakeOverStock
+#        Description: The stock Realm First! Level 80 (overall, class, race) and Grand Master (450 skill) achievements
+#                     in the catalog.
+#                     1 = the module takes them over: stock criteria can't complete them, the module grants them
+#                         with its rules (Wrath tier, eligible characters, bot rule). Someone who already has one
+#                         when this is turned on stays its holder.
+#                     0 = left to the core, as in stock AzerothCore (any character, bots included).
+#        Default:     1
+
+Temucraft.RealmFirst.TakeOverStock = 1
+
+#
+#    Temucraft.RealmFirst.ExcludeRandomBots
+#        Description: Random bots (accounts whose name starts with RandomBotAccountPrefix) can't earn realm firsts.
+#                     When allowed, a random bot is judged by its creation date in the characters table.
+#        Default:     1
+
+Temucraft.RealmFirst.ExcludeRandomBots = 1
+
+#
+#    Temucraft.RealmFirst.RandomBotAccountPrefix
+#        Description: Account name prefix of mod-playerbots' random bot accounts (case does not matter).
+#        Default:     "RNDBOT"
+
+Temucraft.RealmFirst.RandomBotAccountPrefix = "RNDBOT"
+
+#
+#    Temucraft.RealmFirst.ExcludeAltBots
+#        Description: A player's own characters played as bots (in the world without a game client) can't earn
+#                     realm firsts. 0 = they count as the player.
+#        Default:     0
+
+Temucraft.RealmFirst.ExcludeAltBots = 0
+
+#
+#    Temucraft.RealmFirst.RequireSameAccount
+#        Description: A character moved to another account (.character changeaccount) can't earn realm firsts.
+#        Default:     1
+
+Temucraft.RealmFirst.RequireSameAccount = 1
+
+#
+#    Temucraft.RealmFirst.Announce
+#        Description: Also announce each realm first to the whole server in chat. (The client's own "Realm First!"
+#                     message is always shown: it comes with the achievement.)
+#        Default:     1
+
+Temucraft.RealmFirst.Announce = 1
+
+#
+#    Temucraft.RealmFirst.TellIneligible
+#        Description: Tell a player who reaches a free realm first why their character can't earn it.
+#        Default:     1
+
+Temucraft.RealmFirst.TellIneligible = 1

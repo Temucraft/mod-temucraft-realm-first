@@ -1,0 +1,111 @@
+ID	Type	Tier	Level	Class	Race	Skill	SkillValue	Icon	Title	Description
+60000	0	0	60	0	0	0	0	3275	Realm First! Level 60	First person on the realm to achieve level 60.
+60001	1	0	60	1	0	0	0	1462	Realm First! Level 60 Warrior	First warrior on the realm to achieve level 60.
+60002	1	0	60	2	0	0	0	25	Realm First! Level 60 Paladin	First paladin on the realm to achieve level 60.
+60003	1	0	60	3	0	0	0	2831	Realm First! Level 60 Hunter	First hunter on the realm to achieve level 60.
+60004	1	0	60	4	0	0	0	1834	Realm First! Level 60 Rogue	First rogue on the realm to achieve level 60.
+60005	1	0	60	5	0	0	0	1523	Realm First! Level 60 Priest	First priest on the realm to achieve level 60.
+60006	1	0	60	6	0	0	0	2639	Realm First! Level 60 Death Knight	First death knight on the realm to achieve level 60.
+60007	1	0	60	7	0	0	0	38	Realm First! Level 60 Shaman	First shaman on the realm to achieve level 60.
+60008	1	0	60	8	0	0	0	2832	Realm First! Level 60 Mage	First mage on the realm to achieve level 60.
+60009	1	0	60	9	0	0	0	155	Realm First! Level 60 Warlock	First warlock on the realm to achieve level 60.
+60011	1	0	60	11	0	0	0	261	Realm First! Level 60 Druid	First druid on the realm to achieve level 60.
+60021	2	0	60	0	1	0	0	3325	Realm First! Level 60 Human	First human on the realm to achieve level 60.
+60022	2	0	60	0	2	0	0	3289	Realm First! Level 60 Orc	First orc on the realm to achieve level 60.
+60023	2	0	60	0	3	0	0	3286	Realm First! Level 60 Dwarf	First dwarf on the realm to achieve level 60.
+60024	2	0	60	0	4	0	0	3288	Realm First! Level 60 Night Elf	First night elf on the realm to achieve level 60.
+60025	2	0	60	0	5	0	0	3292	Realm First! Level 60 Forsaken	First forsaken on the realm to achieve level 60.
+60026	2	0	60	0	6	0	0	3326	Realm First! Level 60 Tauren	First tauren on the realm to achieve level 60.
+60027	2	0	60	0	7	0	0	3283	Realm First! Level 60 Gnome	First gnome on the realm to achieve level 60.
+60028	2	0	60	0	8	0	0	3291	Realm First! Level 60 Troll	First troll on the realm to achieve level 60.
+60029	2	0	60	0	9	0	0	463874	Realm First! Level 60 Goblin	First goblin on the realm to achieve level 60.
+60030	2	0	60	0	10	0	0	3323	Realm First! Level 60 Blood Elf	First blood elf on the realm to achieve level 60.
+60031	2	0	60	0	11	0	0	3324	Realm First! Level 60 Draenei	First draenei on the realm to achieve level 60.
+60032	2	0	60	0	12	0	0	463876	Realm First! Level 60 Worgen	First worgen on the realm to achieve level 60.
+60033	2	0	60	0	13	0	0	463876	Realm First! Level 60 Pandaren (Alliance)	First Alliance pandaren on the realm to achieve level 60.
+60034	2	0	60	0	14	0	0	463874	Realm First! Level 60 Pandaren (Horde)	First Horde pandaren on the realm to achieve level 60.
+60035	2	0	60	0	15	0	0	3323	Realm First! Level 60 Nightborne	First nightborne on the realm to achieve level 60.
+60036	2	0	60	0	16	0	0	3323	Realm First! Level 60 Highmountain Tauren	First Highmountain tauren on the realm to achieve level 60.
+60037	2	0	60	0	17	0	0	463876	Realm First! Level 60 Void Elf	First void elf on the realm to achieve level 60.
+60038	2	0	60	0	18	0	0	463876	Realm First! Level 60 Lightforged Draenei	First Lightforged draenei on the realm to achieve level 60.
+60039	2	0	60	0	19	0	0	3323	Realm First! Level 60 Zandalari Troll	First Zandalari troll on the realm to achieve level 60.
+60040	2	0	60	0	20	0	0	463876	Realm First! Level 60 Kul Tiran	First Kul Tiran on the realm to achieve level 60.
+60041	2	0	60	0	21	0	0	3323	Realm First! Level 60 Vulpera	First vulpera on the realm to achieve level 60.
+60042	2	0	60	0	22	0	0	3323	Realm First! Level 60 Dark Iron Dwarf	First Dark Iron dwarf on the realm to achieve level 60.
+60043	2	0	60	0	23	0	0	3323	Realm First! Level 60 Mag'har	First Mag'har orc on the realm to achieve level 60.
+60044	2	0	60	0	24	0	0	463876	Realm First! Level 60 Mechagnome	First mechagnome on the realm to achieve level 60.
+60045	2	0	60	0	25	0	0	3323	Realm First! Level 60 Dracthyr (Alliance)	First Alliance dracthyr on the realm to achieve level 60.
+60046	2	0	60	0	26	0	0	3323	Realm First! Level 60 Dracthyr (Horde)	First Horde dracthyr on the realm to achieve level 60.
+60047	2	0	60	0	27	0	0	463876	Realm First! Level 60 Earthen (Alliance)	First Alliance earthen on the realm to achieve level 60.
+60048	2	0	60	0	28	0	0	463876	Realm First! Level 60 Earthen (Horde)	First Horde earthen on the realm to achieve level 60.
+60049	2	0	60	0	29	0	0	3323	Realm First! Level 60 Haranir (Alliance)	First Alliance haranir on the realm to achieve level 60.
+60050	2	0	60	0	30	0	0	3323	Realm First! Level 60 Haranir (Horde)	First Horde haranir on the realm to achieve level 60.
+60200	3	0	0	0	0	164	300	335	Realm First! Artisan Blacksmith	First person on the realm to achieve 300 skill in blacksmithing.
+60201	3	0	0	0	0	171	300	339	Realm First! Artisan Alchemist	First person on the realm to achieve 300 skill in alchemy.
+60202	3	0	0	0	0	185	300	1467	Realm First! Cooking Artisan	First person on the realm to achieve 300 skill in cooking.
+60203	3	0	0	0	0	333	300	578	Realm First! Artisan Enchanter	First person on the realm to achieve 300 skill in enchanting.
+60204	3	0	0	0	0	202	300	333	Realm First! Artisan Engineer	First person on the realm to achieve 300 skill in engineering.
+60205	3	0	0	0	0	129	300	504	Realm First! First Aid Artisan	First person on the realm to achieve 300 skill in first aid.
+60206	3	0	0	0	0	356	300	580	Realm First! Artisan Angler	First person on the realm to achieve 300 skill in fishing.
+60207	3	0	0	0	0	182	300	345	Realm First! Artisan Herbalist	First person on the realm to achieve 300 skill in herbalism.
+60208	3	0	0	0	0	773	300	2557	Realm First! Artisan Scribe	First person on the realm to achieve 300 skill in inscription.
+60209	3	0	0	0	0	755	300	1768	Realm First! Artisan Jewelcrafter	First person on the realm to achieve 300 skill in jewelcrafting.
+60210	3	0	0	0	0	165	300	346	Realm First! Artisan Leatherworker	First person on the realm to achieve 300 skill in leatherworking.
+60211	3	0	0	0	0	186	300	336	Realm First! Artisan Miner	First person on the realm to achieve 300 skill in mining.
+60212	3	0	0	0	0	393	300	736	Realm First! Artisan Skinner	First person on the realm to achieve 300 skill in skinning.
+60213	3	0	0	0	0	197	300	341	Realm First! Artisan Tailor	First person on the realm to achieve 300 skill in tailoring.
+60100	0	1	70	0	0	0	0	3275	Realm First! Level 70	First person on the realm to achieve level 70.
+60101	1	1	70	1	0	0	0	1462	Realm First! Level 70 Warrior	First warrior on the realm to achieve level 70.
+60102	1	1	70	2	0	0	0	25	Realm First! Level 70 Paladin	First paladin on the realm to achieve level 70.
+60103	1	1	70	3	0	0	0	2831	Realm First! Level 70 Hunter	First hunter on the realm to achieve level 70.
+60104	1	1	70	4	0	0	0	1834	Realm First! Level 70 Rogue	First rogue on the realm to achieve level 70.
+60105	1	1	70	5	0	0	0	1523	Realm First! Level 70 Priest	First priest on the realm to achieve level 70.
+60106	1	1	70	6	0	0	0	2639	Realm First! Level 70 Death Knight	First death knight on the realm to achieve level 70.
+60107	1	1	70	7	0	0	0	38	Realm First! Level 70 Shaman	First shaman on the realm to achieve level 70.
+60108	1	1	70	8	0	0	0	2832	Realm First! Level 70 Mage	First mage on the realm to achieve level 70.
+60109	1	1	70	9	0	0	0	155	Realm First! Level 70 Warlock	First warlock on the realm to achieve level 70.
+60111	1	1	70	11	0	0	0	261	Realm First! Level 70 Druid	First druid on the realm to achieve level 70.
+60121	2	1	70	0	1	0	0	3325	Realm First! Level 70 Human	First human on the realm to achieve level 70.
+60122	2	1	70	0	2	0	0	3289	Realm First! Level 70 Orc	First orc on the realm to achieve level 70.
+60123	2	1	70	0	3	0	0	3286	Realm First! Level 70 Dwarf	First dwarf on the realm to achieve level 70.
+60124	2	1	70	0	4	0	0	3288	Realm First! Level 70 Night Elf	First night elf on the realm to achieve level 70.
+60125	2	1	70	0	5	0	0	3292	Realm First! Level 70 Forsaken	First forsaken on the realm to achieve level 70.
+60126	2	1	70	0	6	0	0	3326	Realm First! Level 70 Tauren	First tauren on the realm to achieve level 70.
+60127	2	1	70	0	7	0	0	3283	Realm First! Level 70 Gnome	First gnome on the realm to achieve level 70.
+60128	2	1	70	0	8	0	0	3291	Realm First! Level 70 Troll	First troll on the realm to achieve level 70.
+60129	2	1	70	0	9	0	0	463874	Realm First! Level 70 Goblin	First goblin on the realm to achieve level 70.
+60130	2	1	70	0	10	0	0	3323	Realm First! Level 70 Blood Elf	First blood elf on the realm to achieve level 70.
+60131	2	1	70	0	11	0	0	3324	Realm First! Level 70 Draenei	First draenei on the realm to achieve level 70.
+60132	2	1	70	0	12	0	0	463876	Realm First! Level 70 Worgen	First worgen on the realm to achieve level 70.
+60133	2	1	70	0	13	0	0	463876	Realm First! Level 70 Pandaren (Alliance)	First Alliance pandaren on the realm to achieve level 70.
+60134	2	1	70	0	14	0	0	463874	Realm First! Level 70 Pandaren (Horde)	First Horde pandaren on the realm to achieve level 70.
+60135	2	1	70	0	15	0	0	3323	Realm First! Level 70 Nightborne	First nightborne on the realm to achieve level 70.
+60136	2	1	70	0	16	0	0	3323	Realm First! Level 70 Highmountain Tauren	First Highmountain tauren on the realm to achieve level 70.
+60137	2	1	70	0	17	0	0	463876	Realm First! Level 70 Void Elf	First void elf on the realm to achieve level 70.
+60138	2	1	70	0	18	0	0	463876	Realm First! Level 70 Lightforged Draenei	First Lightforged draenei on the realm to achieve level 70.
+60139	2	1	70	0	19	0	0	3323	Realm First! Level 70 Zandalari Troll	First Zandalari troll on the realm to achieve level 70.
+60140	2	1	70	0	20	0	0	463876	Realm First! Level 70 Kul Tiran	First Kul Tiran on the realm to achieve level 70.
+60141	2	1	70	0	21	0	0	3323	Realm First! Level 70 Vulpera	First vulpera on the realm to achieve level 70.
+60142	2	1	70	0	22	0	0	3323	Realm First! Level 70 Dark Iron Dwarf	First Dark Iron dwarf on the realm to achieve level 70.
+60143	2	1	70	0	23	0	0	3323	Realm First! Level 70 Mag'har	First Mag'har orc on the realm to achieve level 70.
+60144	2	1	70	0	24	0	0	463876	Realm First! Level 70 Mechagnome	First mechagnome on the realm to achieve level 70.
+60145	2	1	70	0	25	0	0	3323	Realm First! Level 70 Dracthyr (Alliance)	First Alliance dracthyr on the realm to achieve level 70.
+60146	2	1	70	0	26	0	0	3323	Realm First! Level 70 Dracthyr (Horde)	First Horde dracthyr on the realm to achieve level 70.
+60147	2	1	70	0	27	0	0	463876	Realm First! Level 70 Earthen (Alliance)	First Alliance earthen on the realm to achieve level 70.
+60148	2	1	70	0	28	0	0	463876	Realm First! Level 70 Earthen (Horde)	First Horde earthen on the realm to achieve level 70.
+60149	2	1	70	0	29	0	0	3323	Realm First! Level 70 Haranir (Alliance)	First Alliance haranir on the realm to achieve level 70.
+60150	2	1	70	0	30	0	0	3323	Realm First! Level 70 Haranir (Horde)	First Horde haranir on the realm to achieve level 70.
+60250	3	1	0	0	0	164	375	335	Realm First! Master Blacksmith	First person on the realm to achieve 375 skill in blacksmithing.
+60251	3	1	0	0	0	171	375	339	Realm First! Master Alchemist	First person on the realm to achieve 375 skill in alchemy.
+60252	3	1	0	0	0	185	375	1467	Realm First! Cooking Master	First person on the realm to achieve 375 skill in cooking.
+60253	3	1	0	0	0	333	375	578	Realm First! Master Enchanter	First person on the realm to achieve 375 skill in enchanting.
+60254	3	1	0	0	0	202	375	333	Realm First! Master Engineer	First person on the realm to achieve 375 skill in engineering.
+60255	3	1	0	0	0	129	375	504	Realm First! First Aid Master	First person on the realm to achieve 375 skill in first aid.
+60256	3	1	0	0	0	356	375	580	Realm First! Master Angler	First person on the realm to achieve 375 skill in fishing.
+60257	3	1	0	0	0	182	375	345	Realm First! Master Herbalist	First person on the realm to achieve 375 skill in herbalism.
+60258	3	1	0	0	0	773	375	2557	Realm First! Master Scribe	First person on the realm to achieve 375 skill in inscription.
+60259	3	1	0	0	0	755	375	1768	Realm First! Master Jewelcrafter	First person on the realm to achieve 375 skill in jewelcrafting.
+60260	3	1	0	0	0	165	375	346	Realm First! Master Leatherworker	First person on the realm to achieve 375 skill in leatherworking.
+60261	3	1	0	0	0	186	375	336	Realm First! Master Miner	First person on the realm to achieve 375 skill in mining.
+60262	3	1	0	0	0	393	375	736	Realm First! Master Skinner	First person on the realm to achieve 375 skill in skinning.
+60263	3	1	0	0	0	197	375	341	Realm First! Master Tailor	First person on the realm to achieve 375 skill in tailoring.

@@ -1,0 +1,25 @@
+-- mod-temucraft-realm-first: player-facing texts. Translations go in module_string_locale (same module and id, plus the locale).
+DELETE FROM `module_string` WHERE `module` = 'mod-temucraft-realm-first';
+INSERT INTO `module_string` (`module`, `id`, `string`) VALUES
+('mod-temucraft-realm-first', 1, '|cffffd100[Realm First!]|r {} has earned {}!'),
+('mod-temucraft-realm-first', 2, '|cffffd100[Realm First!]|r You reached {} first, but this character can''t earn it: {}.'),
+('mod-temucraft-realm-first', 3, 'Realm firsts: module {}, expansion {}, stock firsts {}, random bots {}, alt bots {}.'),
+('mod-temucraft-realm-first', 4, '  Tier {} ({}): {}'),
+('mod-temucraft-realm-first', 5, 'Use: .temucraft realmfirst list [held|open|all]'),
+('mod-temucraft-realm-first', 6, '  [{}] {}: {} ({}, {})'),
+('mod-temucraft-realm-first', 7, '  [{}] {}: free{}'),
+('mod-temucraft-realm-first', 8, '{} held, {} free, {} not handled by the module (off, or stock left to the core).'),
+('mod-temucraft-realm-first', 9, 'No character named {}.'),
+('mod-temucraft-realm-first', 10, '{} (guid {}, account {}): row made {} on account {} as race {} class {} ({}), tiers open then: {:#x}, {}.'),
+('mod-temucraft-realm-first', 11, '{} (guid {}, account {}): no eligibility row, so no realm firsts (not created here while the module ran: pdump, copy, older character or bot). .temucraft realmfirst mark {} eligible adds one.'),
+('mod-temucraft-realm-first', 12, '  Online now as: {} (excluded).'),
+('mod-temucraft-realm-first', 13, '  GM mode is on: nothing is earned while it is.'),
+('mod-temucraft-realm-first', 14, '  Random bot account: excluded.'),
+('mod-temucraft-realm-first', 15, '  Tier {} ({}): {} ({} still free).'),
+('mod-temucraft-realm-first', 16, '{} is not a realm first the module handles (see .temucraft realmfirst list all).'),
+('mod-temucraft-realm-first', 17, '{} is already free.'),
+('mod-temucraft-realm-first', 18, '{} is online: the achievement can only be taken from an offline character. Ask them to log out, or add "keep" to reopen it and let them keep it.'),
+('mod-temucraft-realm-first', 19, '{} is free again ({} {}).'),
+('mod-temucraft-realm-first', 20, 'Use: .temucraft realmfirst mark <name> eligible|ineligible [reason]'),
+('mod-temucraft-realm-first', 21, '{} is now marked {}. .temucraft realmfirst eligible {} shows the result.'),
+('mod-temucraft-realm-first', 22, 'Realm firsts: catalog, tiers and holders re-read.');
